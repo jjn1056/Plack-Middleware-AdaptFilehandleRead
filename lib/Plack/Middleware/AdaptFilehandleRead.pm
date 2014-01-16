@@ -85,7 +85,7 @@ and the proxy will be applied even if a C<getline> method is detected.
       $app;
     };
 
-head1 ATTRIBUTES
+=head1 ATTRIBUTES
 
 This middleware has the following attributes:
 

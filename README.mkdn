@@ -52,7 +52,7 @@ and the proxy will be applied even if a `getline` method is detected.
       $app;
     };
 
-head1 ATTRIBUTES
+# ATTRIBUTES
 
 This middleware has the following attributes:
 
