@@ -43,8 +43,8 @@ which had the `getline` method.  It also will delegate any other method calls
 to the wrapped object via AUTOLOAD so if you have some additional custom methods
 it will still work as expected.
 
-If for some reason you custom filehandle llike object does `getline` but its
-faulty and the `read` method is correct, you can set [\always_adapt](https://metacpan.org/pod/\always_adapt) to true
+If for some reason your custom filehandle llike object does `getline` but its
+faulty and the `read` method is correct, you can set `always_adapt` to true
 and the proxy will be applied even if a `getline` method is detected.
 
     builder {
@@ -54,7 +54,7 @@ and the proxy will be applied even if a `getline` method is detected.
 
 head1 ATTRIBUTES
 
-This middleware has the following attributes
+This middleware has the following attributes:
 
 ## always\_adapt
 

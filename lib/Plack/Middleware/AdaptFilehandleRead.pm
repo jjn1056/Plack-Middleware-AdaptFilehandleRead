@@ -76,8 +76,8 @@ which had the C<getline> method.  It also will delegate any other method calls
 to the wrapped object via AUTOLOAD so if you have some additional custom methods
 it will still work as expected.
 
-If for some reason you custom filehandle llike object does C<getline> but its
-faulty and the C<read> method is correct, you can set L<\always_adapt> to true
+If for some reason your custom filehandle llike object does C<getline> but its
+faulty and the C<read> method is correct, you can set C<always_adapt> to true
 and the proxy will be applied even if a C<getline> method is detected.
 
     builder {
@@ -87,7 +87,7 @@ and the proxy will be applied even if a C<getline> method is detected.
 
 head1 ATTRIBUTES
 
-This middleware has the following attributes
+This middleware has the following attributes:
 
 =head2 always_adapt
 
