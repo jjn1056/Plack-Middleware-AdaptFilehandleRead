@@ -84,6 +84,15 @@ no linebreaks, it is not impossible for the entire file to be thus read into mem
 server has other ways to handle these types of files (for example using XSendfile or via
 some other optimization.)
 
+__NOTE__: For most [Plack](https://metacpan.org/pod/Plack) handlers, "$/" is set to a scalar refer, such as:
+
+    local $/ = \'4096'
+
+which is a flag indicating we'd prefer ->getline to return fixed length chunks
+instead of variable length lines.  In this case the 'chunksize' attribute is
+ignored.  Which means if you are using this with [Plack](https://metacpan.org/pod/Plack) chances are this
+attribute will not be respected.
+
 # SEE ALSO
  
 

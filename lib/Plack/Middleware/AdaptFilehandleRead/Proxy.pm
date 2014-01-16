@@ -11,9 +11,10 @@ sub new {
 
 sub getline {
   my $fh = (my $self = shift)->{_t};
+  # If the buffer is undef, that means we've read it all
   return unless defined($self->{_buff});
   # If the current temporary read buffer has a newline
-  if( (my $idx = index($self->{_buff}, "\n")) >= 0) {
+  if( (my $idx = index($self->{_buff}, $/)) >= 0) { warn 1;
     #remove from the start of the buffer to the newline and return it
     my $line = substr($self->{_buff}, 0, $idx+1);
     $self->{_buff} = substr($self->{_buff},$idx+1);
@@ -21,7 +22,7 @@ sub getline {
   } else {
     # read a chunk into the temporary buffer and try again
     my $chunk;
-    $fh->read($chunk,$self->{_cs});
+    $fh->read($chunk,$self->{_cs}); warn 1;
     if($chunk) {
       $self->{_buff} .= $chunk;
       return $self->getline;
@@ -67,7 +68,16 @@ to override it as so:
   my $new_fh = Plack::Middleware::AdaptFilehandleRead::Proxy
     ->new($old_fh, $chunksize);
 
-Please be aware that the chunksize is read into memory.
+Please be aware that the chunksize is read into memory.  Also please note that
+this chunksize is only used if C<$/> is set to a normal delimiter value (by 
+default this is "/n".  If it is set to a scalar ref (as it is normally done by
+most L<Plack> handlers) such as "$/ = \'4096'" then that scalar ref defines the
+chunk length for read.  In other works, typically plack prefers C<getline> to
+return chunks of a predefined length, although as the L<PSGI> specification indicates
+this support of "$/" is considered optional for a custom filehandle like body.
+We choose to support it since it can help avoid a situation where your entire
+file gets read into memory when the file does not contain newlines (or whatever
+$/ is set to).
 
 =head1 METHODS
 

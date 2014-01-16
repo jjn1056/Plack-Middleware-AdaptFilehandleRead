@@ -118,6 +118,15 @@ C<getline> be used.  In these cases you might wish to make sure your underlying 
 server has other ways to handle these types of files (for example using XSendfile or via
 some other optimization.)
 
+B<NOTE>: For most L<Plack> handlers, "$/" is set to a scalar refer, such as:
+
+    local $/ = \'4096'
+
+which is a flag indicating we'd prefer ->getline to return fixed length chunks
+instead of variable length lines.  In this case the 'chunksize' attribute is
+ignored.  Which means if you are using this with L<Plack> chances are this
+attribute will not be respected.
+
 =head1 SEE ALSO
  
 L<Plack>, L<Plack::Middleware>.
