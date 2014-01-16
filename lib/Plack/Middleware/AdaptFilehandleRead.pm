@@ -81,7 +81,7 @@ faulty and the C<read> method is correct, you can set L<\always_adapt> to true
 and the proxy will be applied even if a C<getline> method is detected.
 
     builder {
-      enable 'AdaptFilehandleRead', always_adapt=>1 ;
+      enable 'AdaptFilehandleRead', always_adapt=>1;
       $app;
     };
 
@@ -103,7 +103,19 @@ C<getline> is broken in some way (but C<read> isn't).
 
 When adapting C<read>, we call for chunks of data 4096 in length.  This may not be the
 most efficient way to read your files based on your specific requirements.  If so, you
-may override the size of the chunks, but be aware that the chunk is read into memory.
+may override the size of the chunks:
+
+    builder {
+      enable 'AdaptFilehandleRead', chunksize=>65536;
+      $app;
+    };
+
+B<NOTE>: Be aware that the chunk is read into memory as each chunk is read.  Should a
+chunk fail to find a linebreak, another chunk would be read.  If you entire file contains
+no linebreaks, it is not impossible for the entire file to be thus read into memory should
+C<getline> be used.  In these cases you might wish to make sure your underlying L<Plack>
+server has other ways to handle these types of files (for example using XSendfile or via
+some other optimization.)
 
 =head1 SEE ALSO
  
