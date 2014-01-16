@@ -11,14 +11,18 @@ sub new {
 
 sub getline {
   my $fh = (my $self = shift)->{_t};
+  return unless defined($self->{_buff});
   # If the current temporary read buffer has a newline
   if( (my $idx = index($self->{_buff}, "\n")) >= 0) {
     #remove from the start of the buffer to the newline and return it
+    my $line = substr($self->{_buff}, 0, $idx+1);
     $self->{_buff} = substr($self->{_buff},$idx+1);
-    return substr($self->{_buff}, 0, $idx);
+    return $line;
   } else {
     # read a chunk into the temporary buffer and try again
-    if(my $chunk = $fh->read($self->{_cs})) {
+    my $chunk;
+    $fh->read($chunk,$self->{_cs});
+    if($chunk) {
       $self->{_buff} .= $chunk;
       return $self->getline;
     } else {

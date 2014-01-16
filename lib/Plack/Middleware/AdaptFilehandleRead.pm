@@ -4,12 +4,13 @@ use warnings;
 package Plack::Middleware::AdaptFilehandleRead;
 
 use base 'Plack::Middleware';
+use Plack::Middleware::AdaptFilehandleRead::Proxy;
 use Plack::Util::Accessor 'always_adapt', 'chunksize';
 use Scalar::Util ();
 use Plack::Util ();
 
 sub looks_like_a_readable_fh {
-  my ($self, $body) = @_;
+  my $self = shift;
   my $body = shift || return;             # If there's a body
   return Scalar::Util::blessed($body) &&  # and its an object
     $body->can('read') &&                 # which can 'read'
