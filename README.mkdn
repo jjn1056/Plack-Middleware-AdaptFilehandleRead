@@ -1,0 +1,95 @@
+# NAME
+ 
+
+Plack::Middleware::AdaptFilehandleRead - Give a filehandle a getline method when its missing
+ 
+
+# SYNOPSIS
+  
+
+    use Plack::Builder;
+    use AppReturnsFileHandleWithRead;
+
+    my $app = AppReturnsFileHandleWithRead->new;
+
+       builder {
+         enable 'AdaptFilehandleRead';
+         $app;
+       };
+    
+
+# DESCRIPTION
+
+[PSGI](https://metacpan.org/pod/PSGI) allows for the body content to be a glob filehandle or a Filehandle
+like object.  For the later case the object must have a method `getline`
+which works as described in [IO::Handle](https://metacpan.org/pod/IO::Handle).  However sometimes you may have
+a custom filehandle like object that support the common `read` method.  For
+example many versions of [Catalyst](https://metacpan.org/pod/Catalyst) allowed the body of a response to be a
+glob or object that does `read`.  People might have written custom streaming
+applications that had this `read` method but not `getline`.  As a result
+these custom Filehandle like objects are not compatible with the expectations
+of [PSGI](https://metacpan.org/pod/PSGI).
+
+This middleware exists to help you convert such a custom made filehandle like
+object.  If you have created something like this (or for example using some
+shared code like [MogileFS::Client](https://metacpan.org/pod/MogileFS::Client) that returns a filehandle that does `read`
+but not `getline`) you can use this middleware to wrap said object in a proxy
+that does the `getline` method by reading from the exising `read` method.
+
+By default, if this middleware is enabled, it will examine any body values and
+check if they are 1) an object, 2) that does `read` and 3) doesn't do `getline`
+If such a case exists it will create an instance of [Plack::Middleware::AdaptFilehandleRead::Proxy](https://metacpan.org/pod/Plack::Middleware::AdaptFilehandleRead::Proxy)
+which had the `getline` method.  It also will delegate any other method calls
+to the wrapped object via AUTOLOAD so if you have some additional custom methods
+it will still work as expected.
+
+If for some reason you custom filehandle llike object does `getline` but its
+faulty and the `read` method is correct, you can set [\always_adapt](https://metacpan.org/pod/\always_adapt) to true
+and the proxy will be applied even if a `getline` method is detected.
+
+    builder {
+      enable 'AdaptFilehandleRead', always_adapt=>1 ;
+      $app;
+    };
+
+head1 ATTRIBUTES
+
+This middleware has the following attributes
+
+## always\_adapt
+
+Defaults to false, Optional.
+
+Set this to any true value and the proxy will always wrap any filehandle like
+object, as long as it has a `read` method (even it if already has a `getline`
+method.)  Use this if you have a custom filehandle like object that you are using
+as the body of a [PSGI](https://metacpan.org/pod/PSGI) reponse that has both `read` and `getline` but the
+`getline` is broken in some way (but `read` isn't). 
+
+## chunksize
+
+When adapting `read`, we call for chunks of data 4096 in length.  This may not be the
+most efficient way to read your files based on your specific requirements.  If so, you
+may override the size of the chunks, but be aware that the chunk is read into memory.
+
+# SEE ALSO
+ 
+
+[Plack](https://metacpan.org/pod/Plack), [Plack::Middleware](https://metacpan.org/pod/Plack::Middleware).
+ 
+
+# AUTHOR
+ 
+
+John Napiorkowski [email:jjnapiork@cpan.org](email:jjnapiork@cpan.org)
+ 
+
+# COPYRIGHT & LICENSE
+ 
+
+Copyright 2014, John Napiorkowski [email:jjnapiork@cpan.org](email:jjnapiork@cpan.org)
+ 
+
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+ 
