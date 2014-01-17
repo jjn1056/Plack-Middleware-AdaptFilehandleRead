@@ -143,7 +143,8 @@ attribute will not be respected :)  You probably should not worry about this!
 
 =head1 SEE ALSO
  
-L<PSGI>, L<Plack>, L<Plack::Middleware>, L<IO::File>.
+L<PSGI>, L<Plack>, L<Plack::Middleware>, L<IO::File>,
+L<Plack::Middleware::AdaptFilehandleRead::Proxy>.
 
 See 'perlvar' docs for more on the possible values of C<$/>.
  
