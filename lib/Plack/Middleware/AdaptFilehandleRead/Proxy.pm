@@ -6,7 +6,7 @@ package Plack::Middleware::AdaptFilehandleRead::Proxy;
 sub new {
   my ($class, $target, $chunksize) = @_;
   die "$target doens't have a read method" unless $target->can('read');
-  return bless +{ _t => $target, _cs => ($chunksize|| 4096), _buff=> ''}, $class;
+  return bless +{ _t => $target, _cs => ($chunksize|| 65536), _buff=> ''}, $class;
 }
 
 
@@ -83,23 +83,31 @@ response.  For example, L<MogileFS::Client> can return such a custom filehandle
 like object and you may wish to use that response to stream via a L<PSGI>
 application.
 
-When adapting C<read> to C<getline> we call C<read> and ask for chunks of 4096
+When adapting C<read> to C<getline> we example the state of $/ in order to
+figure out what to do.  For the normal case, if $/ is a simple value (such as
+/n or newline, which is the default) we call C<read> and ask for chunks of 65536
 bytes.  This may or may not be ideal for your data, in which case you may wish
 to override it as so:
 
   my $new_fh = Plack::Middleware::AdaptFilehandleRead::Proxy
     ->new($old_fh, $chunksize);
 
-Please be aware that the chunksize is read into memory.  Also please note that
-this chunksize is only used if C<$/> is set to a normal delimiter value (by 
-default this is "/n".  If it is set to a scalar ref (as it is normally done by
-most L<Plack> handlers) such as "$/ = \'4096'" then that scalar ref defines the
-chunk length for read.  In other works, typically plack prefers C<getline> to
-return chunks of a predefined length, although as the L<PSGI> specification indicates
-this support of "$/" is considered optional for a custom filehandle like body.
-We choose to support it since it can help avoid a situation where your entire
-file gets read into memory when the file does not contain newlines (or whatever
-$/ is set to).
+Please be aware that the chunksize is read into memory.
+
+For the case when $/ is a scalar ref, such as $/ = \'4096' we will instead read
+fixed sized chunks from ->read and ignore any C<chunksize> settings (you can
+always localize $/ yourself if you prefer more control).
+
+Typically plack prefers C<getline> to return chunks of a predefined length and
+all the common plack handers such as L<Starman>, L<Twiggy> set $/ when calling 
+C<getline> although as the L<PSGI> specification indicates this support of "$/"
+is considered optional for a custom filehandle like body. We choose to support
+it since it can help avoid a situation where your entire file gets read into
+memory when the file does not contain newlines (or whatever $/ is set to).
+
+Currently this object delegates all method calls beyond C<getline> to the
+underlying proxied object via AUTOLOAD.  We do not attempt to proxy any
+L<overload>ing (patches for this welcomed).
 
 =head1 METHODS
 

@@ -29,7 +29,7 @@ sub call {
       # that adds the ->getline method by adapting read.  We assume
       # this ->read works like $fh->read(BUF, LEN, [OFFSET]).
 
-      $r->[2] = Plack::Middleware::AdaptFilehandleRead::Proxy->new($r->[2], ($self->chunksize || 4096));
+      $r->[2] = Plack::Middleware::AdaptFilehandleRead::Proxy->new($r->[2], ($self->chunksize || 65536));
     }
   });
 }
@@ -75,9 +75,9 @@ check if they are 1) an object, 2) that does C<read> and 3) doesn't do C<getline
 If such a case exists it will create an instance of L<Plack::Middleware::AdaptFilehandleRead::Proxy>
 which had the C<getline> method.  It also will delegate any other method calls
 to the wrapped object via AUTOLOAD so if you have some additional custom methods
-it will still work as expected.
+it will still work as expected.  It does not currently proxy any L<overload>ing.
 
-If for some reason your custom filehandle llike object does C<getline> but its
+If for some reason your custom filehandle like object does C<getline> but its
 faulty and the C<read> method is correct, you can set C<always_adapt> to true
 and the proxy will be applied even if a C<getline> method is detected.
 
@@ -85,6 +85,17 @@ and the proxy will be applied even if a C<getline> method is detected.
       enable 'AdaptFilehandleRead', always_adapt=>1;
       $app;
     };
+
+This middleware will do its best to respect the various allowed values of
+C<$/> for deciding how to return content from C<getline>  Currently we support
+C<$/> values of scalar ref (like \8192 for reading fixed length chunks) or
+simple scalars (like \n for reading newline delimited records).  Currently
+we don't support C<$/> as undef (for slurping full content) and some of the other
+more esoteric values of C<$/> as the author percieves that support was not needed
+withing the context of adapting C<read> for L<PSGI> uses (all exampled L<Plack>
+handlers seemed to use the scalar ref fixed length chunk value for C<$/>, but
+we choose to also support the scalar record deliminator option since its very
+commonly seen elsewhere).
 
 =head1 ATTRIBUTES
 
@@ -102,7 +113,9 @@ C<getline> is broken in some way (but C<read> isn't).
 
 =head2 chunksize
 
-When adapting C<read>, we call for chunks of data 4096 in length.  This may not be the
+Defaults to 65536, Optional.
+
+When adapting C<read>, we call for chunks of data 65536 in length.  This may not be the
 most efficient way to read your files based on your specific requirements.  If so, you
 may override the size of the chunks:
 
@@ -112,11 +125,12 @@ may override the size of the chunks:
     };
 
 B<NOTE>: Be aware that the chunk is read into memory as each chunk is read.  Should a
-chunk fail to find a linebreak, another chunk would be read.  If you entire file contains
-no linebreaks, it is not impossible for the entire file to be thus read into memory should
-C<getline> be used.  In these cases you might wish to make sure your underlying L<Plack>
-server has other ways to handle these types of files (for example using XSendfile or via
-some other optimization.)
+chunk fail to find the deliminator indicated by C<$/>, another chunk would be read.
+If you entire file contains no match, it is not impossible for the entire file to be 
+thus read into memory should C<getline> be used.  In these cases you might wish to 
+make sure your underlying L<Plack> server has other ways to handle these types of 
+files (for example using XSendfile or via some other optimization.) or instead be sure
+to use the fixed chunk sized option for C<$/>.
 
 B<NOTE>: For most L<Plack> handlers, "$/" is set to a scalar refer, such as:
 
@@ -125,11 +139,13 @@ B<NOTE>: For most L<Plack> handlers, "$/" is set to a scalar refer, such as:
 which is a flag indicating we'd prefer ->getline to return fixed length chunks
 instead of variable length lines.  In this case the 'chunksize' attribute is
 ignored.  Which means if you are using this with L<Plack> chances are this
-attribute will not be respected.
+attribute will not be respected :)  You probably should not worry about this!
 
 =head1 SEE ALSO
  
-L<Plack>, L<Plack::Middleware>.
+L<Plack>, L<Plack::Middleware>, L<IO::File>.
+
+See 'perlvar' docs for more on the possible values of C<$/>.
  
 =head1 AUTHOR
  
