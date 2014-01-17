@@ -9,28 +9,50 @@ sub new {
   return bless +{ _t => $target, _cs => ($chunksize|| 4096), _buff=> ''}, $class;
 }
 
+
 sub getline {
   my $fh = (my $self = shift)->{_t};
-  # If the buffer is undef, that means we've read it all
-  return unless defined($self->{_buff});
-  # If the current temporary read buffer has a newline
-  if( (my $idx = index($self->{_buff}, $/)) >= 0) { warn 1;
-    #remove from the start of the buffer to the newline and return it
-    my $line = substr($self->{_buff}, 0, $idx+1);
-    $self->{_buff} = substr($self->{_buff},$idx+1);
-    return $line;
-  } else {
-    # read a chunk into the temporary buffer and try again
+
+  if(!defined($/)) {
+    # slurp mode, we pray we never see this..
+    die "Slurping not supported, patches welcomed";
+  } elsif(ref($/)) {
+    # fixed chunk mode
     my $chunk;
-    $fh->read($chunk,$self->{_cs}); warn 1;
-    if($chunk) {
-      $self->{_buff} .= $chunk;
-      return $self->getline;
+    my $len = +${$/};
+    if($fh->read($chunk,$len)) {
+      return $chunk;
     } else {
-      # no more chunks? just return what is left...
-      return my $last_line = delete $self->{_buff};
+      return;
     }
-  }
+  } elsif($/ eq "") {
+    # Nullstring mode
+    die "Null not supported, patches welcomed";
+  } else {
+    # We assume character delim mode... There's a few other weird options
+    # but I doubt we'll see them in the context of a Plack handler.
+
+    # If the buffer is undef, that means we've read it all
+    return unless defined($self->{_buff});
+    # If the current temporary read buffer has a newline
+    if( (my $idx = index($self->{_buff}, $/)) >= 0) {
+      #remove from the start of the buffer to the newline and return it
+      my $line = substr($self->{_buff}, 0, $idx+1);
+      $self->{_buff} = substr($self->{_buff},$idx+1);
+      return $line;
+    } else {
+      # read a chunk into the temporary buffer and try again
+      my $chunk;
+      $fh->read($chunk,$self->{_cs});
+      if($chunk) {
+        $self->{_buff} .= $chunk;
+        return $self->getline;
+      } else {
+        # no more chunks? just return what is left...
+        return my $last_line = delete $self->{_buff};
+      }
+    }
+  } 
 }
 
 sub AUTOLOAD {

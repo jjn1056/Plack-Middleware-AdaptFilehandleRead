@@ -5,8 +5,6 @@ use IO::File;
 use Plack::Middleware::AdaptFilehandleRead;
 use Scalar::Util ();
 
-use Devel::Dwarn;
-
 ok my $lines = q{
 some lines
 with newlines!
@@ -15,7 +13,7 @@ it
 cool?
 
 
-} x 1000;
+} x 10000;
 
 ok my $fh = IO::File->new;
 ok open($fh, '<', \$lines)
