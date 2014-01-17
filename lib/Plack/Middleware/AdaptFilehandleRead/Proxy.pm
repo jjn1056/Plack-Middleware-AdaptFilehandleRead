@@ -71,6 +71,7 @@ Plack::Middleware::AdaptFilehandleRead::Proxy - Wrap an object to supply missing
 =head1 SYNOPSIS
 
     my $new_fh = Plack::Middleware::AdaptFilehandleRead::Proxy->new($old_fh);
+    my $line = $new_fh->getline;
  
 =head1 DESCRIPTION
 
@@ -84,7 +85,7 @@ response.  For example, L<MogileFS::Client> can return such a custom filehandle
 like object and you may wish to use that response to stream via a L<PSGI>
 application.
 
-When adapting C<read> to C<getline> we example the state of $/ in order to
+When adapting C<read> to C<getline> we examine the state of C<$/> in order to
 figure out what to do.  For the normal case, if $/ is a simple value (such as
 /n or newline, which is the default) we call C<read> and ask for chunks of 65536
 bytes.  This may or may not be ideal for your data, in which case you may wish
@@ -94,6 +95,10 @@ to override it as so:
     ->new($old_fh, $chunksize);
 
 Please be aware that the chunksize is read into memory.
+
+We then examine the chunk and return records as indicated by the deliminator.
+When the chunk does not have such a match, we read chunks until it does or we
+read the entire file.  
 
 For the case when $/ is a scalar ref, such as $/ = \'4096' we will instead read
 fixed sized chunks from ->read and ignore any C<chunksize> settings (you can
