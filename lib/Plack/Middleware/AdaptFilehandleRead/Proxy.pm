@@ -9,7 +9,6 @@ sub new {
   return bless +{ _t => $target, _cs => ($chunksize|| 65536), _buff=> ''}, $class;
 }
 
-
 sub getline {
   my $fh = (my $self = shift)->{_t};
 
