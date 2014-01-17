@@ -19,7 +19,7 @@ sub getline {
   } elsif(ref($/)) {
     # fixed chunk mode
     my $chunk;
-    my $len = +${$/};
+    my $len = +${$/}; # can be \4096 or \'4096' some numify
     if($fh->read($chunk,$len)) {
       return $chunk;
     } else {
@@ -34,11 +34,11 @@ sub getline {
 
     # If the buffer is undef, that means we've read it all
     return unless defined($self->{_buff});
-    # If the current temporary read buffer has a newline
+    # If the current temporary read buffer has a match for $/
     if( (my $idx = index($self->{_buff}, $/)) >= 0) {
-      #remove from the start of the buffer to the newline and return it
+      #remove from the start of the buffer to the match and return it
       my $line = substr($self->{_buff}, 0, $idx+1);
-      $self->{_buff} = substr($self->{_buff},$idx+1);
+      $self->{_buff} = substr($self->{_buff},$idx+1); # truncate current buffer
       return $line;
     } else {
       # read a chunk into the temporary buffer and try again
@@ -48,7 +48,8 @@ sub getline {
         $self->{_buff} .= $chunk;
         return $self->getline;
       } else {
-        # no more chunks? just return what is left...
+        # no more chunks? just return what is left and set the buffer to undef
+        # so we know to stop asking.
         return my $last_line = delete $self->{_buff};
       }
     }
