@@ -9,6 +9,8 @@ use Plack::Util::Accessor 'always_adapt', 'chunksize';
 use Scalar::Util ();
 use Plack::Util ();
 
+our $VERSION = '0.002';
+
 sub looks_like_a_readable_fh {
   my $self = shift;
   my $body = shift || return;             # If there's a body
