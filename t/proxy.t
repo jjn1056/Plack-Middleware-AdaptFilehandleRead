@@ -1,4 +1,5 @@
 use Test::Most;
+use IO::File;
 use Plack::Middleware::AdaptFilehandleRead::Proxy;
 
 ## In this test was are testing the proxy object directly

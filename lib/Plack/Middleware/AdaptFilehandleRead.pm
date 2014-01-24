@@ -9,7 +9,7 @@ use Plack::Util::Accessor 'always_adapt', 'chunksize';
 use Scalar::Util ();
 use Plack::Util ();
 
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
 sub looks_like_a_readable_fh {
   my $self = shift;
